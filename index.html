@@ -200,7 +200,39 @@ const ENEMIES=[
    ${eyes(-4.5,4.5,-66,c,1.3)}${L(`M-9,${-72-r*2} L-2,-70.5 M9,${-72-r*2} L2,-70.5`,c,2)}
    <ellipse cx="0" cy="-60" rx="3" ry="${1+o*2.5}" fill="none" stroke="${c}" stroke-width="1.8"/>
    ${r>.5?`<text x="-38" y="-80" font-family="Gochi Hand, cursive" font-size="${16+r*6}" fill="${c}" transform="rotate(-8 -38 -80)">Ê!!</text>
-   ${L(`M14,${-86-(t*16%10)} q3,-3 0,-6 q-3,-3 0,-6 M-14,${-88-((t*16+5)%10)} q3,-3 0,-6 q-3,-3 0,-6`,c,1.6)}`:""}</g>`}}
+   ${L(`M14,${-86-(t*16%10)} q3,-3 0,-6 q-3,-3 0,-6 M-14,${-88-((t*16+5)%10)} q3,-3 0,-6 q-3,-3 0,-6`,c,1.6)}`:""}</g>`}},
+ {name:"Stinky durian",intro:"a STINKY DURIAN",draw:(r,o,t)=>{const c="#827717",rock=Math.sin(t*(2+r*4))*(4+r*8);let d="";
+  for(let k=0;k<26;k++){const a=k/26*Math.PI*2,R=k%2?34:43;d+=(k?"L":"M")+(Math.cos(a)*R).toFixed(1)+","+(-40+Math.sin(a)*R*.92).toFixed(1);}
+  let stink="";for(const x of [-18,0,18]){const y=-90-((t*18+x)%14+14)%14;stink+=L(`M${x},${y} q5,-4 0,-8 q-5,-4 0,-8`,c,2);}
+  return `<g transform="rotate(${rock} 0 -10)">${stink}${F(d+"Z",c,2.6)}
+   ${eyes(-11,11,-46,c)}${brows(-11,11,-54,r,c)}${vein(18,-66,r,c)}
+   ${o>.5?`<ellipse cx="0" cy="-28" rx="7" ry="${2+o*4}" fill="none" stroke="${c}" stroke-width="3"/>`:L("M-9,-26 Q0,-33 9,-26",c)}</g>`}},
+ {name:"Angry bowl of phở",intro:"an ANGRY BOWL OF PHỞ",draw:(r,o,t)=>{const c="#e65100",bob=Math.sin(t*2.2)*4;let nd="";
+  for(let k=0;k<3;k++){const bx=-22+k*14,s=Math.sin(t*(4+r*6)+k*2)*(8+r*14);nd+=L(`M${bx},-30 Q${bx-14+s},-52 ${bx+s*.6},-${62+r*20} q${6-k*4},-6 ${-4+k*3},-10`,c,2.4);}
+  let st="";for(const x of [-30,30]){const y=-62-((t*16+x)%12+12)%12;st+=L(`M${x},${y} q5,-4 0,-8 q-5,-4 0,-8`,c,1.8);}
+  return `<g transform="translate(0,${bob})">${st}${nd}${L(`M8,-30 L${40+Math.sin(t*3)*3},-98 M16,-30 L${50+Math.sin(t*3)*3},-94`,c,2.4)}
+   ${F("M-50,-30 Q-46,10 0,10 Q46,10 50,-30 Z",c)}${L("M-56,-30 H56",c)}${L("M-16,10 v6 h32 v-6",c,2.4)}
+   ${eyes(-14,14,-12,c)}${brows(-14,14,-20,r,c)}${vein(28,-20,r,c)}
+   ${o>.5?`<ellipse cx="0" cy="0" rx="6" ry="${1.5+o*3}" fill="none" stroke="${c}" stroke-width="2.6"/>`:L("M-7,2 Q0,-3 7,2",c)}</g>`}},
+ {name:"Angry motorbike",intro:"an ANGRY MOTORBIKE (BÍP BÍP!)",draw:(r,o,t)=>{const c="#1565c0",b=Math.abs(Math.sin(t*(5+r*5)))*-(2+r*4),sp=t*(4+r*6);
+  const wheel=(x)=>`<circle cx="${x}" cy="-12" r="12" fill="var(--bg)" stroke="${c}" stroke-width="3"/>`+L(`M${x+Math.cos(sp)*10},${-12+Math.sin(sp)*10} L${x-Math.cos(sp)*10},${-12-Math.sin(sp)*10} M${x+Math.sin(sp)*10},${-12-Math.cos(sp)*10} L${x-Math.sin(sp)*10},${-12+Math.cos(sp)*10}`,c,1.8);
+  const wob=Math.sin(t*3)*(2+r*4);
+  return `<g transform="translate(6,${b})">${wheel(-30)}${wheel(32)}
+   ${L(`M${-60-(t*30%16)},-22 q-4,-4 0,-8 M${-70-((t*30+8)%16)},-18 q-4,-4 0,-8`,c,1.8)}
+   <g transform="rotate(${wob} -40 -40)">${F("M-54,-40 h26 v-14 h-26 Z",c,2.4)}${F("M-50,-54 h20 v-14 h-20 Z",c,2.4)}${F("M-46,-68 h14 v-12 h-14 Z",c,2.4)}</g>
+   ${F("M-46,-24 Q-46,-40 -20,-40 L14,-40 Q22,-24 40,-24 L44,-14 L-46,-14 Z",c)}${L("M-30,-44 h30 M20,-40 L32,-66 M24,-68 h16 M38,-68 l4,-8",c)}
+   <circle cx="41" cy="-50" r="7" fill="var(--bg)" stroke="${c}" stroke-width="3"/><circle cx="40" cy="-50" r="2.5" fill="${c}"/>${L(`M32,${-60-r*3} L46,-57`,c)}
+   ${eyes(-14,2,-30,c)}${brows(-14,2,-36,r,c)}
+   ${r>.4?`<text x="-20" y="-96" font-family="Gochi Hand, cursive" font-size="${16+r*6}" fill="${c}" transform="rotate(-6 -20 -96)">BÍP BÍP!</text>`:""}</g>`}},
+ {name:"Giant duck in a nón lá",intro:"a GIANT DUCK IN A NÓN LÁ",draw:(r,o,t)=>{const c="#f9a825",h="#8d6e63",bob=Math.sin(t*1.8)*3,beak=o*10;
+  return `<g transform="translate(14,${bob}) scale(1.3)">
+   ${F("M-30,-8 Q-40,-36 -16,-34 Q10,-40 34,-30 L48,-42 L44,-18 Q38,0 0,0 Q-26,0 -30,-8 Z",c)}${L("M-4,-26 Q10,-14 26,-22",c,2.4)}
+   <circle cx="-22" cy="-54" r="17" fill="var(--bg)" stroke="${c}" stroke-width="3"/>
+   ${F(`M-37,-54 L-56,${-54-beak*.4} Q-50,-58 -37,-58 Z`,c,2.6)}${F(`M-37,-52 L-54,${-48+beak} L-37,-48 Z`,c,2.6)}
+   <circle cx="-26" cy="-58" r="2.6" fill="${c}"/>${L(`M-33,${-66-r*3} L-20,-62`,c)}
+   ${F("M-46,-66 L-20,-94 L6,-66 Q-20,-62 -46,-66 Z",h,2.4)}${L("M-33,-72 L-20,-90 M-7,-72 L-20,-90 M-40,-66 Q-40,-50 -36,-42",h,1.6)}
+   ${r>.5?`<text x="-72" y="-100" font-family="Gochi Hand, cursive" font-size="${13+r*5}" fill="${c}">CẠC CẠC!!</text>`:""}</g>`}}
+
 ];
 // particles: bubbles, drops, fish
 const P=[];let last=0;
@@ -270,6 +302,10 @@ const SFX={
   if(i===2){noise(.08,.5,"highpass",2000,4000,.05);noise(.08,.5,"highpass",2000,4000,.2);noise(.1,.5,"highpass",2000,4000,.35);}
   if(i===3){tone(170,.18,"sine",.28,.05,430);tone(430,.35,"sine",.22,.22,210);}
   if(i===4){tone(650,.14,"square",.1,.05,1150,2500);tone(700,.2,"square",.1,.25,1250,2500);}
+  if(i===5){tone(220,.5,"sawtooth",.1,.05,80,320);tone(160,.4,"sawtooth",.08,.4,70,300);}
+  if(i===6){noise(.5,.35,"bandpass",400,2400,.05);noise(.3,.3,"bandpass",500,2600,.6);}
+  if(i===7){tone(440,.16,"square",.1,.05,null,1800);tone(554,.16,"square",.1,.05,null,1800);tone(440,.22,"square",.1,.28,null,1800);tone(554,.22,"square",.1,.28,null,1800);}
+  if(i===8){tone(620,.13,"square",.12,.05,380,1400);tone(620,.16,"square",.12,.25,360,1400);}
  }
 };
 function setMute(m){muted=m;$("snd").textContent=m?"🔇 Sound off":"🔊 Sound on";$("snd").setAttribute("aria-pressed",String(!m));try{localStorage.setItem("stepMuted",m?"1":"0")}catch(e){}}
