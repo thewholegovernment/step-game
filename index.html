@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: playful, hand-drawn, a doodle that came to life.
+IDEA: a felt-pen sketch on a sheet of paper, like the original drawing.
+PICTURE: staircase, stick man, a deep sea and an increasingly silly enemy fill the top of the screen.
+COLOUR and TYPE: white paper, black steps, brown man, blue sea, bright enemies; Gochi Hand + Patrick Hand.
+LAYOUT: one column: title, scene, word, keyboard. Fits a phone.
+*/
+:root{color-scheme:light dark;
+ --bg:light-dark(#ffffff,#1b1f24);--ink:light-dark(#141414,#eef0f2);--man:light-dark(#795548,#d7a98c);
+ --sea:light-dark(#3f51b5,#7d8cff);--shark:light-dark(#00b4d0,#36d6ef);--soft:light-dark(#f1efe9,#262b31);
+ --wrong:light-dark(#c62828,#ff6b6b);--right:light-dark(#2e7d32,#7ed37f);--tear:#4fc3f7}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.4 "Patrick Hand",system-ui,sans-serif;overflow-x:clip}
+main{max-width:520px;margin:0 auto;padding:12px 12px 24px;display:flex;flex-direction:column;gap:10px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+h1{font:400 34px/1.05 "Gochi Hand",cursive;margin:0}
+.score{font-size:17px;white-space:nowrap}
+.lvl{font:400 22px/1.1 "Gochi Hand",cursive;color:var(--wrong);margin-top:-4px}
+.scene{position:relative;width:100%;aspect-ratio:428/500;border-radius:14px;overflow:hidden;background:var(--bg);box-shadow:0 0 0 2px var(--soft)}
+.scene svg{position:absolute;inset:0;width:100%;height:100%}
+.cat{font-size:17px;opacity:.75;text-align:center}
+.word{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;min-height:52px;font:400 34px/1 "Gochi Hand",cursive;color:var(--man)}
+.word span{width:30px;text-align:center;border-bottom:3px solid var(--man);border-radius:2px;padding-bottom:2px;height:44px}
+.word span.miss{color:var(--wrong)}
+.kb{display:flex;flex-direction:column;gap:6px}
+.row{display:flex;justify-content:center;gap:5px}
+.kb button{flex:1 1 0;max-width:46px;height:48px;border:2px solid var(--ink);border-radius:10px 12px 9px 11px;background:var(--bg);color:var(--ink);font:400 22px "Gochi Hand",cursive;cursor:pointer;padding:0;touch-action:manipulation}
+.kb button:focus-visible,.again:focus-visible{outline:3px solid var(--shark);outline-offset:2px}
+.kb button.hit{background:var(--right);border-color:var(--right);color:var(--bg)}
+.kb button.miss{opacity:.35;text-decoration:line-through;text-decoration-color:var(--wrong);text-decoration-thickness:3px}
+.kb button:disabled{cursor:default}
+.msg{min-height:30px;text-align:center;font:400 24px/1.15 "Gochi Hand",cursive}
+.again{display:none;margin:0 auto;height:48px;padding:0 26px;border:2px solid var(--ink);border-radius:14px 10px 13px 9px;background:var(--shark);color:#06222a;font:400 24px "Gochi Hand",cursive;cursor:pointer}
+.again.show{display:block}
+.tbtn{align-self:flex-start;height:44px;padding:0 16px;border:2px dashed var(--ink);border-radius:12px;background:var(--bg);color:var(--ink);font:400 19px "Gochi Hand",cursive;cursor:pointer}
+.tbtn:focus-visible,.modal button:focus-visible,.modal input:focus-visible{outline:3px solid var(--shark);outline-offset:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.word .wg{display:inline-flex;gap:8px}
+.word{gap:10px 34px}
+.word span.p{border:0;width:auto;min-width:10px}
+.word.small{font-size:26px;gap:8px 26px}.word.small span{width:22px;height:36px}.word.small .wg{gap:5px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:5}
+.modal.open{display:flex}
+.card{background:var(--bg);color:var(--ink);border:2px solid var(--ink);border-radius:16px 12px 18px 14px;padding:18px;width:100%;max-width:400px;display:flex;flex-direction:column;gap:10px}
+.card h2{font:400 28px/1.1 "Gochi Hand",cursive;margin:0}
+.card label{font-size:17px;display:flex;flex-direction:column;gap:4px}
+.card input[type=password],.card input[type=text]{font:16px "Patrick Hand",sans-serif;height:46px;padding:0 12px;border:2px solid var(--ink);border-radius:10px;background:var(--bg);color:var(--ink)}
+.card .row2{display:flex;gap:10px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
+.card .chk{flex-direction:row;align-items:center;gap:8px;margin-right:auto}
+.card .chk input{width:22px;height:22px}
+.card .note{font-size:15px;opacity:.75;margin:0}
+.card button{height:46px;padding:0 18px;border:2px solid var(--ink);border-radius:12px;background:var(--bg);color:var(--ink);font:400 21px "Gochi Hand",cursive;cursor:pointer}
+.card button.go{background:var(--shark);color:#06222a}
+.card button:disabled{opacity:.4;cursor:default}
+.wave{animation:wave 3s linear infinite}
+@keyframes wave{to{transform:translateX(-50px)}}
+.tremble{animation:tremble .18s linear infinite}
+@keyframes tremble{25%{transform:translate(-.8px,0)}75%{transform:translate(.8px,0)}}
+.tear{animation:tear 1s ease-in infinite}.tear.b{animation-delay:.5s}
+@keyframes tear{0%{transform:translateY(0);opacity:1}100%{transform:translateY(22px);opacity:0}}
+.sweat{animation:sweat 1.6s ease-in infinite}
+@keyframes sweat{0%{transform:translateY(0);opacity:0}20%{opacity:1}100%{transform:translateY(10px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.wave,.tremble,.tear,.sweat{animation:none}}
+</style>
+</head>
+<body>
+<main>
+ <header><h1>Step Game</h1><div class="score" id="score">Saved 0 · Lost 0</div></header>
+ <div class="top"><div class="lvl" id="lvl"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="tbtn" id="snd" aria-pressed="true">🔊 Sound on</button><button class="tbtn" id="tbtn">✏️ Teacher word</button></div></div>
+ <div class="scene">
+  <svg id="svg" viewBox="-14 -30 428 500" aria-label="A stick man on a staircase above a sea with an enemy waiting">
+   <defs>
+    <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="2.6"/></filter>
+   </defs>
+   <path filter="url(#rough)" d="M10,60 H60 V105 H110 V150 H160 V195 H210 V240 H260 V285 H310 V328" fill="none" stroke="var(--ink)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+   <g id="wrongs" font-family="Gochi Hand, cursive" font-size="30" fill="var(--man)"></g>
+   <text id="sfx" x="250" y="190" font-family="Gochi Hand, cursive" font-size="24" fill="var(--wrong)" opacity="0" text-anchor="middle">♪ dun-dun… dun-dun… ♪</text>
+   <g id="enemy" filter="url(#rough)"></g>
+   <g id="man" transform="translate(35 60)"><g id="manInner">
+    <g fill="none" stroke="var(--man)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+     <circle cx="0" cy="-60" r="14" fill="var(--bg)"/>
+     <path d="M0,-46 V-22 M0,-22 L-9,0 M0,-22 L9,0"/>
+     <polyline id="armL" points=""/><polyline id="armR" points=""/>
+    </g>
+    <g id="face" transform="translate(0 -60)"></g>
+   </g></g>
+   <g id="fx"></g>
+   <g id="splash" stroke="var(--sea)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0"></g>
+   <g class="wave">
+    <path id="seaFill" fill="var(--sea)" fill-opacity=".14" d=""/>
+    <path id="seaLine" fill="none" stroke="var(--sea)" stroke-width="3.5" stroke-linecap="round" d=""/>
+   </g>
+  </svg>
+ </div>
+ <div class="cat" id="cat"></div>
+ <div class="word" id="word" aria-live="polite"></div>
+ <div class="msg" id="msg" aria-live="polite"></div>
+ <button class="again" id="again"></button>
+ <div class="kb" id="kb"></div>
+</main>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mt">
+ <form class="card" id="tform" autocomplete="off">
+  <h2 id="mt">Teacher's secret word</h2>
+  <label>Word or phrase (hidden while you type)
+   <input type="password" id="tword" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+  <label>Hint for students (optional)
+   <input type="text" id="thint" maxlength="40" autocomplete="off" placeholder="e.g. Food"></label>
+  <p class="note">Spaces and punctuation are shown for free. Vietnamese accents are removed (bánh mì → BANH MI).</p>
+  <div class="row2"><label class="chk"><input type="checkbox" id="tshow"> Show</label>
+   <button type="button" id="tcancel">Cancel</button><button type="submit" class="go" id="tgo" disabled>Start</button></div>
+ </form>
+</div>
+<script>
+{
+const WORDS={
+ "Animal":["ELEPHANT","GIRAFFE","PENGUIN","KANGAROO","OCTOPUS","DOLPHIN","TORTOISE","HEDGEHOG","FLAMINGO","CROCODILE","PANDA","SQUIRREL"],
+ "Food":["PANCAKE","SPAGHETTI","AVOCADO","PINEAPPLE","DUMPLING","NOODLES","SANDWICH","CHOCOLATE","MANGO","PRETZEL","BURRITO","CUPCAKE"],
+ "At the beach":["SANDCASTLE","SEASHELL","LIGHTHOUSE","SURFBOARD","SUNSCREEN","JELLYFISH","SEAGULL","LIFEGUARD","STARFISH","SNORKEL"],
+ "Around the house":["UMBRELLA","TOOTHBRUSH","BLANKET","KETTLE","CURTAIN","STAIRCASE","CUSHION","TELEVISION","BOOKSHELF","LADDER"],
+ "Places":["VOLCANO","WATERFALL","DESERT","JUNGLE","LIBRARY","MUSEUM","AIRPORT","ISLAND","CASTLE","HOSPITAL"],
+ "Things that move":["BICYCLE","HELICOPTER","SUBMARINE","SKATEBOARD","ROCKET","SCOOTER","SAILBOAT","TRACTOR","ESCALATOR","BALLOON"]
+};
+const MAX=6,SEA=330;
+const $=id=>document.getElementById(id);
+const man=$("man"),face=$("face"),enemyG=$("enemy");
+let word="",cat="",guessed=new Set(),wrong=[],busy=false,over=false,won=false,saved=0,lost=0,lvl=0;
+const pos={x:35,y:60,r:0};
+const E={i:0,x:360,y:0,rage:0,open:.15};
+let pending=null;
+const isL=c=>c>="A"&&c<="Z";
+const tread=i=>({x:35+50*i,y:60+45*i});
+
+// sea
+{let d="M-60,330";for(let x=-60;x<460;x+=50)d+=` Q${x+12.5},322 ${x+25},330 Q${x+37.5},338 ${x+50},330`;
+ $("seaLine").setAttribute("d",d);$("seaFill").setAttribute("d",d+" L460,480 L-60,480 Z");}
+
+const ease=p=>p<.5?2*p*p:1-(-2*p+2)**2/2;
+const tween=(ms,f,e=ease)=>new Promise(res=>{const s=performance.now();
+ const step=t=>{const p=Math.min(1,(t-s)/ms);f(e(p));p<1?requestAnimationFrame(step):res();};requestAnimationFrame(step);});
+const lerp=(a,b,p)=>a+(b-a)*p;
+const rp=(x,y,a)=>{a*=Math.PI/180;return(x*Math.cos(a)-y*Math.sin(a)).toFixed(1)+","+(x*Math.sin(a)+y*Math.cos(a)).toFixed(1)};
+
+/* ---------- enemies: origin = waterline, centre ---------- */
+const L=(d,c,w=3)=>`<path d="${d}" stroke="${c}" stroke-width="${w}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+const F=(d,c,w=3)=>`<path d="${d}" stroke="${c}" stroke-width="${w}" fill="var(--bg)" stroke-linecap="round" stroke-linejoin="round"/>`;
+const eyes=(x1,x2,y,c,R=2.4)=>`<circle cx="${x1}" cy="${y}" r="${R}" fill="${c}"/><circle cx="${x2}" cy="${y}" r="${R}" fill="${c}"/>`;
+const brows=(x1,x2,y,r,c)=>L(`M${x1-7},${y-2-3*r} L${x1+4},${y+2} M${x2+7},${y-2-3*r} L${x2-4},${y+2}`,c);
+const vein=(x,y,r,c)=>r>.35?L(`M${x},${y} l7,-2 M${x-1},${y+4} l7,-2 M${x+1},${y-3} l-2,9 M${x+5},${y-4} l-2,9`,c,2):"";
+const ENEMIES=[
+ {name:"Hungry shark",intro:"a hungry shark",draw:(r,o,t)=>{const j=4+o*36,bob=Math.sin(t*2.6)*3,c="var(--shark)";
+  return `<g transform="translate(40,${-12+bob})">
+  <g transform="rotate(${-j*.5})">${F("M0,0 L-62,4 Q-50,30 -10,38 L70,42 L70,0 Z",c)}${L("M-58,4 L-53,-5 L-48,4 L-43,-5 L-38,4 L-33,-4 L-28,4 L-23,-4 L-18,3 L-12,-3 L-6,2",c)}</g>
+  <g transform="rotate(${j})">${F("M0,0 L-75,-6 Q-72,-38 -32,-58 Q12,-72 70,-56 L70,0 Z",c)}${L("M-70,-5 L-64,4 L-58,-4 L-52,5 L-46,-3 L-40,5 L-34,-2 L-28,5 L-22,-1 L-16,4 L-10,0",c)}
+   ${L(`M-40,${-47-r*4} L-20,-41`,c)}<circle cx="-28" cy="-34" r="3.2" fill="${c}"/>${L("M20,-50 Q26,-30 20,-12 M30,-50 Q36,-30 30,-12",c,2)}</g></g>`}},
+ {name:"Angry octopus",intro:"an ANGRY OCTOPUS",draw:(r,o,t)=>{const bob=Math.sin(t*2)*4,c="#8e24aa";let ten="";
+  for(let k=0;k<6;k++){const bx=-24+9.6*k,amp=8+r*14,s=Math.sin(t*(3+r*4)+k*1.3)*amp,sp=(k-2.5);
+   const tx=bx+sp*22+s,ty=-4-(6+r*30)*(k%2?1:.5);
+   ten+=L(`M${bx},-20 Q${bx+sp*8-s},${(ty-20)/2+6} ${tx},${ty} q${sp*2},-7 ${-sp*1.5},-9`,c);}
+  return `<g transform="translate(0,${bob})">${ten}${F("M-26,-20 Q-32,-84 0,-84 Q32,-84 26,-20 Q0,-14 -26,-20 Z",c)}
+   ${eyes(-9,9,-50,c)}${brows(-9,9,-58,r,c)}${vein(16,-74,r,c)}
+   ${o>.5?`<ellipse cx="0" cy="-33" rx="5" ry="${2+o*4}" fill="none" stroke="${c}" stroke-width="3"/>`:L("M-7,-31 Q0,-37 7,-31",c)}</g>`}},
+ {name:"Angry bánh mì",intro:"an ANGRY BÁNH MÌ",draw:(r,o,t)=>{const a=4+o*30,bob=Math.sin(t*2.4)*5,rock=Math.sin(t*1.7)*3,c="#b26a1f",g="#43a047";
+  let z="M-56,-30";for(let x=-56;x<58;x+=8)z+=` L${x+4},${-34-(x/8%2?0:5)} L${x+8},-30`;
+  return `<g transform="translate(10,${-6+bob}) rotate(${rock}) scale(.88)">
+   ${F("M-62,-26 Q-58,-6 0,-4 Q58,-6 64,-28 Z",c)}${L(z,g,2.5)}${L("M-38,-33 h28 M6,-34 h26",c,2.5)}
+   <g transform="rotate(${a} 64 -28)">${F("M-62,-26 Q-62,-62 0,-64 Q60,-62 64,-28 Z",c)}
+    ${L("M-8,-56 l12,-7 M14,-56 l12,-7 M36,-52 l12,-7",c,2.5)}
+    ${eyes(-42,-24,-42,c)}${brows(-42,-24,-50,r,c)}${vein(-4,-48,r,c)}</g></g>`}},
+ {name:"Furious bánh giò",intro:"a FURIOUS BÁNH GIÒ",draw:(r,o,t)=>{const hop=-Math.abs(Math.sin(t*(3+r*4)))*(4+r*12),f=Math.sin(t*(6+r*6))*8,c="#2e7d32";
+  return `<g transform="translate(0,${hop})">
+   ${L(`M-22,-40 L-40,${-56+f} M22,-40 L40,${-56-f} M-12,-6 L-16,6 M12,-6 L16,6`,c)}
+   <circle cx="-41" cy="${-58+f}" r="4.5" fill="var(--bg)" stroke="${c}" stroke-width="3"/><circle cx="41" cy="${-58-f}" r="4.5" fill="var(--bg)" stroke="${c}" stroke-width="3"/>
+   ${F("M-38,-6 Q0,-14 38,-6 L7,-84 Q0,-90 -7,-84 Z",c)}${L("M0,-84 L-14,-12 M0,-84 L14,-12",c,1.5)}
+   <path d="M-31,-24 Q0,-31 31,-24 M-22,-50 Q0,-55 22,-50" stroke="${c}" stroke-width="2" fill="none" stroke-dasharray="5 3"/>
+   ${L("M0,-88 q-10,-10 -4,-14 q6,0 4,14 q8,-12 12,-8 q2,6 -12,8",c,2.5)}
+   ${eyes(-9,9,-38,c)}${brows(-9,9,-45,r,c)}${vein(14,-66,r,c)}
+   ${L(`M-10,-22 L-5,${-26-o*4} L0,-22 L5,${-26-o*4} L10,-22`,c,2.5)}</g>`}},
+ {name:"Grandma on a surfboard",intro:"GRANDMA ON A SURFBOARD (with a slipper!)",draw:(r,o,t)=>{
+  const c="#d81b60",tilt=Math.sin(t*2)*5,ang=(-70+Math.sin(t*(5+r*9))*30)*Math.PI/180,hx=(9+22*Math.cos(ang)).toFixed(1),hy=(-52+22*Math.sin(ang)).toFixed(1);
+  return `<g transform="translate(14,${Math.sin(t*2.3)*3}) rotate(${tilt}) scale(1.35)">
+   <ellipse cx="0" cy="-2" rx="56" ry="6" fill="var(--bg)" stroke="${c}" stroke-width="2.4"/>${L("M-44,-2 H44",c,1.4)}
+   ${L("M-6,-8 L-7,-26 M6,-8 L7,-26 M-6,-8 h-5 M6,-8 h5",c,2.4)}
+   ${F("M-15,-25 L15,-25 L0,-56 Z",c,2.4)}${L("M0,-56 V-48",c,2.4)}
+   ${L(`M0,-50 L-12,-42 L-5,-36 M0,-50 L${hx},${hy}`,c,2.4)}
+   <g transform="translate(${hx},${hy}) rotate(${(ang*180/Math.PI+90).toFixed(0)})"><ellipse cx="0" cy="-9" rx="4.5" ry="10" fill="var(--bg)" stroke="${c}" stroke-width="2.2"/>${L("M-4,-6 Q0,-11 4,-6",c,2)}</g>
+   <circle cx="0" cy="-83" r="5.5" fill="var(--bg)" stroke="${c}" stroke-width="2.2"/>
+   <circle cx="0" cy="-67" r="11" fill="var(--bg)" stroke="${c}" stroke-width="2.4"/>${L("M-11,-70 Q-6,-78 0,-77 Q6,-78 11,-70",c,1.8)}
+   <circle cx="-4.5" cy="-66" r="3.6" fill="none" stroke="${c}" stroke-width="1.6"/><circle cx="4.5" cy="-66" r="3.6" fill="none" stroke="${c}" stroke-width="1.6"/>
+   ${eyes(-4.5,4.5,-66,c,1.3)}${L(`M-9,${-72-r*2} L-2,-70.5 M9,${-72-r*2} L2,-70.5`,c,2)}
+   <ellipse cx="0" cy="-60" rx="3" ry="${1+o*2.5}" fill="none" stroke="${c}" stroke-width="1.8"/>
+   ${r>.5?`<text x="-38" y="-80" font-family="Gochi Hand, cursive" font-size="${16+r*6}" fill="${c}" transform="rotate(-8 -38 -80)">Ê!!</text>
+   ${L(`M14,${-86-(t*16%10)} q3,-3 0,-6 q-3,-3 0,-6 M-14,${-88-((t*16+5)%10)} q3,-3 0,-6 q-3,-3 0,-6`,c,1.6)}`:""}</g>`}}
+];
+// particles: bubbles, drops, fish
+const P=[];let last=0;
+function spawn(o){P.push(Object.assign({vx:0,vy:0,g:0,life:1,max:1},o));}
+function headPos(){const a=pos.r*Math.PI/180;return{x:pos.x+60*Math.sin(a),y:pos.y-60*Math.cos(a)};}
+function drawFx(dt){
+ let h="";
+ for(let k=P.length-1;k>=0;k--){const q=P[k];q.life-=dt;q.vy+=q.g*dt;q.x+=q.vx*dt;q.y+=q.vy*dt;
+  if(q.kind==="bubble"&&q.y<SEA){q.life=0}
+  if(q.kind==="drop"&&q.y>SEA+4&&q.vy>0){q.life=0}
+  if(q.life<=0){P.splice(k,1);continue}
+  const al=Math.min(1,q.life/q.max*2).toFixed(2);
+  if(q.kind==="bubble")h+=`<circle cx="${(q.x+Math.sin(q.life*9)*2).toFixed(1)}" cy="${q.y.toFixed(1)}" r="${q.r}" fill="none" stroke="var(--sea)" stroke-width="1.5" opacity="${al}"/>`;
+  else if(q.kind==="drop")h+=`<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="${q.r||2.5}" fill="var(--sea)" opacity="${al}"/>`;
+  else if(q.kind==="fish"){const w=Math.sin(q.life*12)*3;h+=`<g transform="translate(${q.x.toFixed(1)} ${(q.y+Math.sin(q.life*3)*4).toFixed(1)}) scale(${q.s})" stroke="${q.c}" stroke-width="2.4" fill="var(--bg)" stroke-linejoin="round" stroke-linecap="round"><path d="M0,0 Q10,-8 22,0 Q10,8 0,0 Z"/><path d="M22,0 L30,${-6+w} L30,${6+w} Z"/><circle cx="6" cy="-1" r="1.6" fill="${q.c}" stroke="none"/></g>`;}
+ }
+ $("fx").innerHTML=h;
+}
+function loop(ts){
+ const dt=Math.min(.05,(ts-(last||ts))/1000);last=ts;
+ E.t=ts/1000;enemyG.setAttribute("transform",`translate(${E.x.toFixed(1)} ${(SEA+E.y).toFixed(1)})`);
+ enemyG.innerHTML=ENEMIES[E.i].draw(E.rage,E.open,E.t);drawFx(dt);requestAnimationFrame(loop);
+}
+
+/* ---------- sound effects (synthesised, no files) ---------- */
+let ac=null,master=null,noiseBuf=null,muted=false;
+try{muted=localStorage.getItem("stepMuted")==="1"}catch(e){}
+function unlock(){
+ try{if(!ac){ac=new (window.AudioContext||window.webkitAudioContext)();master=ac.createGain();master.gain.value=.55;master.connect(ac.destination);
+  noiseBuf=ac.createBuffer(1,ac.sampleRate,ac.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}
+  if(ac.state==="suspended")ac.resume();}catch(e){}
+}
+const on=()=>ac&&!muted&&ac.state==="running";
+function tone(f,dur,type="sine",vol=.2,when=0,to=null,lp=null){
+ if(!on())return;const t=ac.currentTime+when,o=ac.createOscillator(),g=ac.createGain();
+ o.type=type;o.frequency.setValueAtTime(f,t);if(to)o.frequency.exponentialRampToValueAtTime(to,t+dur);
+ g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.012);g.gain.exponentialRampToValueAtTime(.001,t+dur);
+ let n=o;if(lp){const b=ac.createBiquadFilter();b.type="lowpass";b.frequency.value=lp;o.connect(b);n=b;}
+ n.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.05);
+}
+function noise(dur,vol=.3,type="lowpass",f0=1000,f1=null,when=0){
+ if(!on())return;const t=ac.currentTime+when,s=ac.createBufferSource(),b=ac.createBiquadFilter(),g=ac.createGain();
+ s.buffer=noiseBuf;b.type=type;b.frequency.setValueAtTime(f0,t);if(f1)b.frequency.exponentialRampToValueAtTime(f1,t+dur);
+ g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);
+ s.connect(b);b.connect(g);g.connect(master);s.start(t);s.stop(t+dur+.05);
+}
+const SFX={
+ ding(){tone(880,.16,"triangle",.25);tone(1320,.28,"triangle",.22,.08);},
+ wrong(l){tone(320-l*28,.42,"square",.09,0,150-l*14,900);},
+ step(){noise(.09,.45,"lowpass",420,180);},
+ tap(){noise(.06,.3,"lowpass",900,400);},
+ fanfare(){[523,659,784,1047].forEach((f,i)=>tone(f,.28,"triangle",.22,i*.11));[523,659,784].forEach(f=>tone(f,.7,"triangle",.12,.5));},
+ hop(){tone(420,.12,"sine",.15,0,760);},
+ whistleDown(){tone(1500,.7,"sine",.14,0,260);},
+ whistleUp(){tone(380,.5,"sine",.13,0,1300);},
+ splash(big=1){noise(.55*big,.5,"bandpass",2600,450);noise(.25,.25,"lowpass",500,150,.02);},
+ chomp(){noise(.07,.7,"lowpass",900,250);noise(.07,.7,"lowpass",900,250,.16);tone(90,.18,"square",.12,0,50,400);},
+ bubble(){tone(450+Math.random()*350,.08,"sine",.12,0,1300);},
+ stroke(){noise(.14,.13,"bandpass",1300,700);},
+ spray(){noise(.12,.1,"highpass",3500,6000);},
+ boing(){tone(170,.18,"sine",.28,0,430);tone(430,.35,"sine",.22,.17,210);},
+ dunDun(){[0,.6,1.1,1.45,1.72,1.92,2.08,2.22].forEach((w,i)=>tone(i%2?87.3:82.4,.32,"sawtooth",.32,w,null,420));},
+ stinger(){[110,116.5,155.6].forEach(f=>tone(f,.8,"sawtooth",.13,0,null,700));},
+ enemy(i){
+  if(i===0)tone(70,.6,"sawtooth",.2,0,45,300);
+  if(i===1)for(let k=0;k<5;k++)tone(300+k*90,.08,"sine",.15,.1+k*.09,700+k*90);
+  if(i===2){noise(.08,.5,"highpass",2000,4000,.05);noise(.08,.5,"highpass",2000,4000,.2);noise(.1,.5,"highpass",2000,4000,.35);}
+  if(i===3){tone(170,.18,"sine",.28,.05,430);tone(430,.35,"sine",.22,.22,210);}
+  if(i===4){tone(650,.14,"square",.1,.05,1150,2500);tone(700,.2,"square",.1,.25,1250,2500);}
+ }
+};
+function setMute(m){muted=m;$("snd").textContent=m?"🔇 Sound off":"🔊 Sound on";$("snd").setAttribute("aria-pressed",String(!m));try{localStorage.setItem("stepMuted",m?"1":"0")}catch(e){}}
+document.addEventListener("pointerdown",unlock,true);document.addEventListener("keydown",unlock,true);
+
+/* ---------- stick man ---------- */
+function drawMan(){man.setAttribute("transform",`translate(${pos.x.toFixed(1)} ${pos.y.toFixed(1)}) rotate(${pos.r.toFixed(1)})`);}
+const ARMS={
+ wave:[[-10,-30,-14,-22],[11,-46,17,-58]],down:[[-9,-30,-13,-21],[9,-30,13,-21]],
+ nervous:[[-11,-30,-3,-33],[11,-30,3,-33]],cry:[[-15,-40,-12,-55],[15,-40,12,-55]],
+ up:[[-11,-48,-16,-62],[11,-48,16,-62]],fall:[[-14,-46,-22,-56],[14,-46,22,-56]],
+ hug:[[-11,-32,-4,-20],[11,-32,4,-20]],float:[[-14,-40,-26,-44],[14,-40,26,-44]],
+ swimA:[[-8,-50,-6,-74],[8,-30,10,-14]],swimB:[[-8,-30,-10,-14],[8,-50,6,-74]]
+};
+function arms(k){const [l,r]=ARMS[k];
+ $("armL").setAttribute("points",`0,-38 ${l[0]},${l[1]} ${l[2]},${l[3]}`);
+ $("armR").setAttribute("points",`0,-38 ${r[0]},${r[1]} ${r[2]},${r[3]}`);}
+const S=`stroke="var(--man)" stroke-width="2" stroke-linecap="round" fill="none"`;
+const dot=(x,y,r=1.8)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="var(--man)"/>`;
+const drop=(x,y)=>`<path d="M${x},${y-4} Q${x+3},${y} ${x},${y+2} Q${x-3},${y} ${x},${y-4}Z" fill="var(--tear)"/>`;
+const FACES=[
+ `<path d="M-9,-8 Q-5.5,-12 -2,-8 M2,-8 Q5.5,-12 9,-8" ${S}/>${dot(-5,-3)}${dot(5,-3)}
+  <path d="M-8,2 Q0,14 8,2 Z" fill="var(--bg)" stroke="var(--man)" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="-9" cy="3" r="2.5" fill="#f48fb1" opacity=".7"/><circle cx="9" cy="3" r="2.5" fill="#f48fb1" opacity=".7"/>`,
+ `<path d="M-8,-8 Q-5,-10 -2,-8 M2,-8 Q5,-10 8,-8" ${S}/>${dot(-5,-3)}${dot(5,-3)}<path d="M-7,3 Q0,10 7,3" ${S}/>`,
+ `<path d="M-8,-8 L-2,-8 M2,-9 L8,-7" ${S}/>${dot(-5,-3)}${dot(5,-3)}<path d="M-5,6 L5,5" ${S}/>`,
+ `<path d="M-9,-6 L-3,-9 M3,-9 L9,-6" ${S}/>${dot(-5,-3,2.1)}${dot(5,-3,2.1)}
+  <path d="M-6,7 Q-3,4 0,7 Q3,10 6,7" ${S}/><g class="sweat">${drop(13,-8)}</g>`,
+ `<path d="M-9,-6 L-3,-11 M3,-11 L9,-6" ${S}/>
+  <circle cx="-5" cy="-3" r="3.2" fill="var(--bg)" stroke="var(--man)" stroke-width="1.5"/><circle cx="5" cy="-3" r="3.2" fill="var(--bg)" stroke="var(--man)" stroke-width="1.5"/>
+  ${dot(-5,-2.5,1.3)}${dot(5,-2.5,1.3)}<path d="M-6,9 Q0,2 6,9" ${S}/>
+  <g class="sweat">${drop(13,-9)}</g><g class="sweat" style="animation-delay:.8s">${drop(-13,-6)}</g>`,
+ `<path d="M-9,-7 L-3,-11 M3,-11 L9,-7" ${S}/><path d="M-8,-2 Q-5,-6 -2,-2 M2,-2 Q5,-6 8,-2" ${S}/>
+  <ellipse cx="0" cy="7" rx="5" ry="4.5" fill="var(--man)"/>
+  <path d="M-6,-1 Q-8,6 -7,12 M6,-1 Q8,6 7,12" stroke="var(--tear)" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <g class="tear">${drop(-7,2)}</g><g class="tear b">${drop(7,2)}</g><g class="tear b">${drop(-8,4)}</g><g class="tear">${drop(8,4)}</g>`
+];
+const WIN=`<path d="M-9,-9 Q-5.5,-13 -2,-9 M2,-9 Q5.5,-13 9,-9" ${S}/><path d="M-8,-2 Q-5,-6 -2,-2 M2,-2 Q5,-6 8,-2" ${S}/>
+ <path d="M-9,2 Q0,15 9,2 Z" fill="var(--bg)" stroke="var(--man)" stroke-width="2" stroke-linejoin="round"/>
+ <circle cx="-10" cy="3" r="2.5" fill="#f48fb1" opacity=".8"/><circle cx="10" cy="3" r="2.5" fill="#f48fb1" opacity=".8"/>`;
+const ARMSET=["wave","wave","down","nervous","nervous","cry"];
+function faceOnly(level){face.innerHTML=FACES[level];$("manInner").setAttribute("class",level>=4?"tremble":"");}
+function mood(level){faceOnly(level);arms(ARMSET[level]);}
+
+/* ---------- board ---------- */
+function drawWrongs(){
+ $("wrongs").innerHTML=wrong.map((l,i)=>{const x=200+i*32,y=44;
+  return `<text x="${x}" y="${y}" text-anchor="middle">${l}</text><path d="M${x-11},${y-22} L${x+11},${y+4}" stroke="var(--wrong)" stroke-width="2.5" stroke-linecap="round"/>`}).join("");
+}
+function drawWord(reveal=false){
+ const el=$("word");el.classList.toggle("small",word.length>12);
+ el.innerHTML=word.split(" ").filter(Boolean).map(w=>`<div class="wg">${[...w].map(c=>!isL(c)?`<span class="p">${c.replace(/[<&>]/g,"")}</span>`:
+  guessed.has(c)?`<span>${c}</span>`:reveal?`<span class="miss">${c}</span>`:`<span></span>`).join("")}</div>`).join("");
+}
+function buildKb(){
+ $("kb").innerHTML=["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"].map(r=>`<div class="row">${[...r].map(c=>`<button id="k${c}" data-k="${c}" aria-label="${c}">${c}</button>`).join("")}</div>`).join("");
+}
+function showLevel(){$("lvl").textContent=`Level ${lvl+1} · ${ENEMIES[E.i].name}`;}
+function button(label){const b=$("again");b.textContent=label;b.classList.toggle("show",!!label);}
+function newWord(custom){
+ custom=custom||pending;pending=null;
+ if(custom){word=custom.word;cat="";}
+ else{const cats=Object.keys(WORDS);cat=cats[Math.random()*cats.length|0];
+ const list=WORDS[cat];let w;do{w=list[Math.random()*list.length|0]}while(w===word&&list.length>1);word=w;}
+ guessed=new Set();wrong=[];over=false;won=false;
+ drawWrongs();drawWord();buildKb();button("");showLevel();
+ $("cat").textContent=custom?(custom.hint?"Hint: "+custom.hint:"Teacher's word"):"Category: "+cat;
+}
+function resetScene(){
+ Object.assign(pos,tread(0),{r:0});man.style.opacity=1;drawMan();mood(0);
+ Object.assign(E,{x:360,y:0,rage:0,open:.15});$("splash").setAttribute("opacity",0);
+}
+function startOver(){resetScene();newWord();$("msg").textContent=`Watch out for ${ENEMIES[E.i].intro}!`;busy=false;}
+
+/* ---------- animations ---------- */
+async function stepDown(level){
+ const a={...pos},b=tread(level),e0={...E};
+ await tween(650,p=>{pos.x=lerp(a.x,b.x,p);pos.y=lerp(a.y,b.y,p)-14*Math.sin(Math.PI*p);drawMan();
+  E.x=lerp(e0.x,360-level*6,p);E.rage=lerp(e0.rage,level/5,p);E.open=lerp(e0.open,.15+level*.14,p);});
+ SFX.step();
+}
+function splashAt(x){const sp=$("splash");SFX.splash();
+ sp.innerHTML=[-18,-9,0,9,18].map(dx=>`<path d="M${x+dx},326 l${dx*.6},-${16-Math.abs(dx)*.4}"/>`).join("");
+ sp.setAttribute("opacity",1);return tween(600,p=>sp.setAttribute("opacity",1-p),p=>p);}
+async function fall(){
+ arms("fall");SFX.whistleDown();const a={...pos};
+ await tween(300,p=>{pos.x=a.x+25*p;pos.y=a.y-10*Math.sin(Math.PI*p);drawMan();});
+ E.open=1;E.rage=1;const b={...pos},e0=E.x;
+ await tween(500,p=>{pos.x=b.x+15*p;pos.y=b.y+75*p*p;pos.r=50*p;drawMan();E.x=e0-25*p;},p=>p);
+ man.style.opacity=0;SFX.chomp();const s=splashAt(pos.x);
+ await tween(220,p=>{E.open=1-p;});await s;
+}
+async function celebrate(){
+SFX.fanfare(); face.innerHTML=WIN;arms("up");$("manInner").setAttribute("class","");
+ const e0={...E};tween(900,p=>{E.y=e0.y+230*p;E.open=e0.open*(1-p);});
+ const y0=pos.y;for(let i=0;i<3;i++){SFX.hop();await tween(380,p=>{pos.y=y0-18*Math.sin(Math.PI*p);drawMan();});}
+}
+function bubbles(n=1){if(Math.random()<.35)SFX.bubble();const h=headPos();for(let i=0;i<n;i++)spawn({kind:"bubble",x:h.x+(Math.random()-.5)*6,y:h.y,vy:-30-Math.random()*25,r:(2+Math.random()*3).toFixed(1),life:2,max:2});}
+function bigSplash(x,n=16,power=1){for(let i=0;i<n;i++)spawn({kind:"drop",x:x+(Math.random()-.5)*20,y:SEA-2,vx:(Math.random()-.5)*160*power,vy:-(110+Math.random()*130)*power,g:420,r:(1.8+Math.random()*2).toFixed(1),life:2,max:2});}
+function fishSchool(){const cols=["#ff9800","#e91e63","#009688"];
+ for(let i=0;i<5;i++)spawn({kind:"fish",x:440+i*28+Math.random()*20,y:385+Math.random()*60,vx:-(55+Math.random()*25),s:(.7+Math.random()*.5).toFixed(2),c:cols[i%3],life:12,max:12});}
+function swimTo(tx,ms,bub=true){
+ const x0=pos.x,dir=tx>x0?1:-1;pos.r=90*dir;let nb=0,ph=-1;
+ return tween(ms,p=>{const now=performance.now();pos.x=lerp(x0,tx,p);pos.y=SEA+12+Math.sin(now/180)*3;
+  const k=(now/260|0)%2;if(k!==ph){ph=k;if(!k)SFX.stroke();}arms(k?"swimA":"swimB");drawMan();if(bub&&now>nb){bubbles();nb=now+220;}
+  if(Math.random()<.04){const h=headPos();spawn({kind:"drop",x:h.x-dir*30,y:SEA-2,vx:-dir*30,vy:-90,g:420,life:1,max:1});}},p=>p);
+}
+const bobble=ms=>tween(ms,()=>{pos.y=SEA+12+Math.sin(performance.now()/180)*3;drawMan();},p=>p);
+async function swim(){
+ busy=true;button("");$("msg").textContent="Cannonball! 💦";
+ face.innerHTML=WIN;arms("hug");$("manInner").setAttribute("class","");
+ const a={...pos},tx=Math.max(110,Math.min(a.x+70,210));SFX.whistleUp();
+ await tween(1100,p=>{pos.x=lerp(a.x,tx,p);pos.y=lerp(a.y,SEA+10,p*p)-80*Math.sin(Math.PI*p);pos.r=360*p;drawMan();},p=>p);
+ pos.r=0;bigSplash(tx,22,1.2);splashAt(tx);SFX.splash(1.6);
+ await tween(500,p=>{pos.y=lerp(SEA+10,SEA+60,p);pos.r=40*p;drawMan();if(Math.random()<.3)bubbles(2);});
+ await tween(500,p=>{pos.y=lerp(SEA+60,SEA+12,p);pos.r=lerp(40,90,p);drawMan();});
+ $("msg").textContent="Wheee! Look, fish! 🐟";fishSchool();
+ await swimTo(240,1700);await swimTo(70,2300);
+ // float on back with a fountain
+ $("msg").textContent="Ahhh… so relaxing.";arms("float");
+ await tween(500,p=>{pos.r=lerp(-90,90,p);pos.y=lerp(SEA+12,SEA+3,p);drawMan();});
+ let nf=0;await tween(2600,p=>{const now=performance.now();pos.x=lerp(70,140,p);pos.y=SEA+3+Math.sin(now/300)*2;drawMan();
+  if(now>nf&&p>.15&&p<.8){const h=headPos();spawn({kind:"drop",x:h.x+(Math.random()-.5)*3,y:h.y-8,vx:(Math.random()-.5)*20,vy:-150-Math.random()*30,g:380,r:2.2,life:1.4,max:1.4});if(Math.random()<.25)SFX.spray();nf=now+50;}},p=>p);
+ // handstand
+ $("msg").textContent="Handstand! 🤸";arms("up");SFX.boing();
+ await tween(600,p=>{pos.r=lerp(90,180,p);pos.y=lerp(SEA+3,SEA-14,p);pos.x=lerp(140,160,p);drawMan();if(Math.random()<.2)bubbles();});
+ await tween(1800,p=>{pos.r=180+Math.sin(p*Math.PI*6)*12;drawMan();if(Math.random()<.12)bubbles();},p=>p);
+ bigSplash(pos.x,8,.6);SFX.splash(.7);
+ await tween(500,p=>{pos.r=lerp(180,90,p);pos.y=lerp(SEA-14,SEA+12,p);drawMan();});
+ // uh oh
+ faceOnly(3);arms("down");$("msg").textContent="Uh oh… what's that sound?";
+ SFX.dunDun();const sfx=$("sfx");await tween(500,p=>sfx.setAttribute("opacity",p));
+ await bobble(1400);
+ lvl++;E.i=lvl%ENEMIES.length;Object.assign(E,{x:360,y:140,rage:.8,open:.7});showLevel();
+ SFX.stinger();SFX.enemy(E.i);faceOnly(4);$("msg").textContent=`AAAH! It's ${ENEMIES[E.i].intro}!`;
+ tween(500,p=>sfx.setAttribute("opacity",1-p));
+ await Promise.all([tween(1000,p=>{E.y=140*(1-p);}),swimTo(236,1100)]);
+ pos.r=0;faceOnly(5);arms("cry");
+ for(let i=5;i>=0;i--){const s={...pos},b=tread(i);
+  await tween(i===5?450:300,p=>{pos.x=lerp(s.x,b.x,p);pos.y=lerp(s.y,b.y,p)-12*Math.sin(Math.PI*p);drawMan();});
+  SFX.tap();mood(i);}
+ await tween(700,p=>{E.rage=.8*(1-p);E.open=lerp(.7,.15,p);});
+ newWord();$("msg").textContent=`Phew! Save him from ${ENEMIES[E.i].intro}!`;busy=false;
+}
+
+async function guess(c){
+ if(busy||over||guessed.has(c)||wrong.includes(c))return;
+ const btn=$("k"+c);
+ if(word.includes(c)){
+  guessed.add(c);btn.classList.add("hit");btn.disabled=true;drawWord();SFX.ding();
+  if([...word].every(ch=>!isL(ch)||guessed.has(ch))){
+   over=won=true;saved++;score();$("msg").textContent="You saved him! 🎉";busy=true;
+   await celebrate();busy=false;button("Go swimming 🏊");
+  }else $("msg").textContent=["Nice one!","Phew!","Good guess!","Yes!"][Math.random()*4|0];
+  return;
+ }
+ wrong.push(c);btn.classList.add("miss");btn.disabled=true;drawWrongs();busy=true;SFX.wrong(wrong.length);
+ if(wrong.length>=MAX){
+  over=true;lost++;score();$("msg").textContent="Oh no…";await fall();
+  $("msg").textContent=`Got him! The word was ${word}.`;drawWord(true);button("Try again");
+ }else{
+  $("msg").textContent=["Uh oh…","Careful!","Not that one…","He's getting nervous!","Last step!"][wrong.length-1];
+  await stepDown(wrong.length);mood(wrong.length);
+ }
+ busy=false;
+}
+function score(){$("score").textContent=`Saved ${saved} · Lost ${lost}`;}
+function next(){if(busy)return;won?swim():startOver();}
+
+$("kb").addEventListener("click",e=>{const b=e.target.closest("button");if(b)guess(b.dataset.k);});
+document.addEventListener("keydown",e=>{
+ if(e.ctrlKey||e.metaKey||e.altKey||$("modal").classList.contains("open"))return;
+ const k=e.key.toUpperCase();
+ if(/^[A-Z]$/.test(k))guess(k);else if(k==="ENTER"&&over)next();
+});
+$("again").addEventListener("click",next);
+// teacher word
+const clean=v=>v.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[đĐ]/g,"D").toUpperCase().replace(/[^A-Z '\-!?.,]/g,"").replace(/\s+/g," ").trim();
+const modal=$("modal"),tw=$("tword"),th=$("thint");
+function openT(){tw.value="";th.value="";$("tshow").checked=false;tw.type="password";$("tgo").disabled=true;modal.classList.add("open");setTimeout(()=>tw.focus(),50);}
+function closeT(){modal.classList.remove("open");$("tbtn").focus();}
+$("tbtn").addEventListener("click",openT);
+$("snd").addEventListener("click",()=>{unlock();setMute(!muted);if(!muted)SFX.ding();});setMute(muted);
+$("tcancel").addEventListener("click",closeT);
+modal.addEventListener("click",e=>{if(e.target===modal)closeT();});
+modal.addEventListener("keydown",e=>{if(e.key==="Escape")closeT();});
+$("tshow").addEventListener("change",e=>{tw.type=e.target.checked?"text":"password";});
+tw.addEventListener("input",()=>{$("tgo").disabled=!/[A-Z]/.test(clean(tw.value));});
+$("tform").addEventListener("submit",e=>{e.preventDefault();
+ const w=clean(tw.value);if(!/[A-Z]/.test(w))return;
+ const c={word:w,hint:th.value.trim().slice(0,40)};tw.value="";closeT();
+ if(busy){pending=c;$("msg").textContent="Got it! Your word is ready for the next round.";}
+ else{resetScene();newWord(c);$("msg").textContent=`Watch out for ${ENEMIES[E.i].intro}!`;}
+});
+startOver();requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
