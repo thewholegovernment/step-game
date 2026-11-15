@@ -63,6 +63,17 @@ h1{font:400 34px/1.05 "Gochi Hand",cursive;margin:0}
 .card button{height:46px;padding:0 18px;border:2px solid var(--ink);border-radius:12px;background:var(--bg);color:var(--ink);font:400 21px "Gochi Hand",cursive;cursor:pointer}
 .card button.go{background:var(--shark);color:#06222a}
 .card button:disabled{opacity:.4;cursor:default}
+.ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;padding:16px}
+.startb{display:none;pointer-events:auto;height:64px;padding:0 34px;border:3px solid var(--ink);border-radius:18px 12px 20px 14px;background:var(--shark);color:#06222a;font:400 36px "Gochi Hand",cursive;cursor:pointer;box-shadow:5px 5px 0 var(--ink)}
+.startb.show{display:block;animation:wob 1.6s ease-in-out infinite}
+@keyframes wob{50%{transform:rotate(-3deg) scale(1.05)}}
+.title{display:none;pointer-events:auto;cursor:pointer;background:var(--bg);border:3px solid var(--ink);border-radius:20px 14px 22px 12px;padding:12px 22px 16px;text-align:center;box-shadow:6px 6px 0 var(--ink);max-width:92%}
+.title.show{display:block;animation:pop .55s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes pop{from{transform:scale(.2) rotate(-25deg);opacity:0}to{transform:scale(1) rotate(-3deg);opacity:1}}
+.title p{margin:0;font:400 20px "Gochi Hand",cursive;opacity:.8}
+.title svg{position:static;display:block;width:220px;height:156px;margin:2px auto}
+.title h2{margin:0;font:400 clamp(30px,8vw,40px)/1.05 "Gochi Hand",cursive;color:var(--wrong);text-wrap:balance}
+@media (prefers-reduced-motion:reduce){.startb.show,.title.show{animation:none}.title.show{transform:rotate(-3deg)}}
 .wave{animation:wave 3s linear infinite}
 @keyframes wave{to{transform:translateX(-50px)}}
 .tremble{animation:tremble .18s linear infinite}
@@ -102,6 +113,8 @@ h1{font:400 34px/1.05 "Gochi Hand",cursive;margin:0}
     <path id="seaLine" fill="none" stroke="var(--sea)" stroke-width="3.5" stroke-linecap="round" d=""/>
    </g>
   </svg>
+  <div class="ov"><button class="startb" id="start">▶ Start</button>
+   <div class="title" id="title" role="status"><p id="tlvl"></p><svg id="tsvg" viewBox="-105 -125 225 160"></svg><h2 id="tname"></h2></div></div>
  </div>
  <div class="cat" id="cat"></div>
  <div class="word" id="word" aria-live="polite"></div>
@@ -254,7 +267,8 @@ function drawFx(dt){
 function loop(ts){
  const dt=Math.min(.05,(ts-(last||ts))/1000);last=ts;
  E.t=ts/1000;enemyG.setAttribute("transform",`translate(${E.x.toFixed(1)} ${(SEA+E.y).toFixed(1)})`);
- enemyG.innerHTML=ENEMIES[E.i].draw(E.rage,E.open,E.t);drawFx(dt);requestAnimationFrame(loop);
+ enemyG.innerHTML=ENEMIES[E.i].draw(E.rage,E.open,E.t);drawFx(dt);
+ if(cardOn)$("tsvg").innerHTML=`<g filter="url(#rough)">${ENEMIES[E.i].draw(1,.4+.4*Math.abs(Math.sin(E.t*3)),E.t)}</g>`;requestAnimationFrame(loop);
 }
 
 /* ---------- sound effects (synthesised, no files) ---------- */
@@ -414,41 +428,58 @@ function swimTo(tx,ms,bub=true){
   if(Math.random()<.04){const h=headPos();spawn({kind:"drop",x:h.x-dir*30,y:SEA-2,vx:-dir*30,vy:-90,g:420,life:1,max:1});}},p=>p);
 }
 const bobble=ms=>tween(ms,()=>{pos.y=SEA+12+Math.sin(performance.now()/180)*3;drawMan();},p=>p);
-async function swim(){
- busy=true;button("");$("msg").textContent="Cannonball! 💦";
- face.innerHTML=WIN;arms("hug");$("manInner").setAttribute("class","");
- const a={...pos},tx=Math.max(110,Math.min(a.x+70,210));SFX.whistleUp();
- await tween(1100,p=>{pos.x=lerp(a.x,tx,p);pos.y=lerp(a.y,SEA+10,p*p)-80*Math.sin(Math.PI*p);pos.r=360*p;drawMan();},p=>p);
- pos.r=0;bigSplash(tx,22,1.2);splashAt(tx);SFX.splash(1.6);
- await tween(500,p=>{pos.y=lerp(SEA+10,SEA+60,p);pos.r=40*p;drawMan();if(Math.random()<.3)bubbles(2);});
- await tween(500,p=>{pos.y=lerp(SEA+60,SEA+12,p);pos.r=lerp(40,90,p);drawMan();});
+async function swimFun(fromStairs){
+ face.innerHTML=WIN;$("manInner").setAttribute("class","");
+ if(fromStairs){
+  $("msg").textContent="Cannonball! 💦";arms("hug");
+  const a={...pos},tx=Math.max(110,Math.min(a.x+70,210));SFX.whistleUp();
+  await tween(1100,p=>{pos.x=lerp(a.x,tx,p);pos.y=lerp(a.y,SEA+10,p*p)-80*Math.sin(Math.PI*p);pos.r=360*p;drawMan();},p=>p);
+  pos.r=0;bigSplash(tx,22,1.2);splashAt(tx);SFX.splash(1.6);
+  await tween(500,p=>{pos.y=lerp(SEA+10,SEA+60,p);pos.r=40*p;drawMan();if(Math.random()<.3)bubbles(2);});
+  await tween(500,p=>{pos.y=lerp(SEA+60,SEA+12,p);pos.r=lerp(40,90,p);drawMan();});
+ }
  $("msg").textContent="Wheee! Look, fish! 🐟";fishSchool();
  await swimTo(240,1700);await swimTo(70,2300);
- // float on back with a fountain
  $("msg").textContent="Ahhh… so relaxing.";arms("float");
  await tween(500,p=>{pos.r=lerp(-90,90,p);pos.y=lerp(SEA+12,SEA+3,p);drawMan();});
  let nf=0;await tween(2600,p=>{const now=performance.now();pos.x=lerp(70,140,p);pos.y=SEA+3+Math.sin(now/300)*2;drawMan();
   if(now>nf&&p>.15&&p<.8){const h=headPos();spawn({kind:"drop",x:h.x+(Math.random()-.5)*3,y:h.y-8,vx:(Math.random()-.5)*20,vy:-150-Math.random()*30,g:380,r:2.2,life:1.4,max:1.4});if(Math.random()<.25)SFX.spray();nf=now+50;}},p=>p);
- // handstand
  $("msg").textContent="Handstand! 🤸";arms("up");SFX.boing();
  await tween(600,p=>{pos.r=lerp(90,180,p);pos.y=lerp(SEA+3,SEA-14,p);pos.x=lerp(140,160,p);drawMan();if(Math.random()<.2)bubbles();});
  await tween(1800,p=>{pos.r=180+Math.sin(p*Math.PI*6)*12;drawMan();if(Math.random()<.12)bubbles();},p=>p);
  bigSplash(pos.x,8,.6);SFX.splash(.7);
  await tween(500,p=>{pos.r=lerp(180,90,p);pos.y=lerp(SEA-14,SEA+12,p);drawMan();});
- // uh oh
+}
+// title card for a new enemy
+let cardOn=false,cardDone=null;
+function titleCard(ms){
+ const c=$("title");$("tlvl").textContent=`Level ${lvl+1} · Here comes…`;$("tname").textContent=ENEMIES[E.i].name+"!";
+ cardOn=true;c.classList.add("show");
+ return new Promise(res=>{const end=()=>{if(!cardOn)return;cardOn=false;c.classList.remove("show");res();};cardDone=end;setTimeout(end,ms);});
+}
+async function enemyArrives(advance){
  faceOnly(3);arms("down");$("msg").textContent="Uh oh… what's that sound?";
  SFX.dunDun();const sfx=$("sfx");await tween(500,p=>sfx.setAttribute("opacity",p));
  await bobble(1400);
- lvl++;E.i=lvl%ENEMIES.length;Object.assign(E,{x:360,y:140,rage:.8,open:.7});showLevel();
- SFX.stinger();SFX.enemy(E.i);faceOnly(4);$("msg").textContent=`AAAH! It's ${ENEMIES[E.i].intro}!`;
+ if(advance)lvl++;E.i=lvl%ENEMIES.length;Object.assign(E,{x:360,y:140,rage:.8,open:.7});showLevel();
+ SFX.stinger();SFX.enemy(E.i);faceOnly(4);
  tween(500,p=>sfx.setAttribute("opacity",1-p));
- await Promise.all([tween(1000,p=>{E.y=140*(1-p);}),swimTo(236,1100)]);
+ await tween(1000,p=>{E.y=140*(1-p);pos.y=SEA+12+Math.sin(performance.now()/180)*3;drawMan();});
+ $("msg").textContent="";
+ await titleCard(3200);
+ $("msg").textContent=`AAAH! It's ${ENEMIES[E.i].intro}!`;
+ await swimTo(236,1100);
  pos.r=0;faceOnly(5);arms("cry");
  for(let i=5;i>=0;i--){const s={...pos},b=tread(i);
   await tween(i===5?450:300,p=>{pos.x=lerp(s.x,b.x,p);pos.y=lerp(s.y,b.y,p)-12*Math.sin(Math.PI*p);drawMan();});
   SFX.tap();mood(i);}
  await tween(700,p=>{E.rage=.8*(1-p);E.open=lerp(.7,.15,p);});
  newWord();$("msg").textContent=`Phew! Save him from ${ENEMIES[E.i].intro}!`;busy=false;
+}
+async function swim(){busy=true;button("");await swimFun(true);await enemyArrives(true);}
+async function intro(){
+ busy=true;$("start").classList.remove("show");unlock();
+ splashAt(pos.x+30);await swimFun(false);await enemyArrives(false);
 }
 
 async function guess(c){
@@ -479,7 +510,7 @@ $("kb").addEventListener("click",e=>{const b=e.target.closest("button");if(b)gue
 document.addEventListener("keydown",e=>{
  if(e.ctrlKey||e.metaKey||e.altKey||$("modal").classList.contains("open"))return;
  const k=e.key.toUpperCase();
- if(/^[A-Z]$/.test(k))guess(k);else if(k==="ENTER"&&over)next();
+ if(/^[A-Z]$/.test(k))guess(k);else if(k==="ENTER"){if($("start").classList.contains("show"))intro();else if(cardOn)cardDone();else if(over)next();}
 });
 $("again").addEventListener("click",next);
 // teacher word
@@ -500,7 +531,13 @@ $("tform").addEventListener("submit",e=>{e.preventDefault();
  if(busy){pending=c;$("msg").textContent="Got it! Your word is ready for the next round.";}
  else{resetScene();newWord(c);$("msg").textContent=`Watch out for ${ENEMIES[E.i].intro}!`;}
 });
-startOver();requestAnimationFrame(loop);
+$("title").addEventListener("click",()=>cardDone&&cardDone());
+$("start").addEventListener("click",intro);
+// opening scene: swimming, no enemy yet
+buildKb();busy=true;showLevel();Object.assign(E,{x:360,y:240,rage:0,open:.15});
+Object.assign(pos,{x:60,y:SEA+12,r:90});drawMan();face.innerHTML=FACES[0];arms("swimA");
+$("msg").textContent="Tap Start to go for a swim!";$("start").classList.add("show");
+requestAnimationFrame(loop);
 }
 </script>
 </body>
